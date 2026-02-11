@@ -137,6 +137,16 @@ fn request_permissions_tool_is_under_development() {
 }
 
 #[test]
+fn apply_patch_crlf_is_under_development() {
+    assert_eq!(Feature::ApplyPatchCrlf.stage(), Stage::UnderDevelopment);
+    assert_eq!(Feature::ApplyPatchCrlf.default_enabled(), false);
+    assert_eq!(
+        feature_for_key("apply_patch_crlf"),
+        Some(Feature::ApplyPatchCrlf)
+    );
+}
+
+#[test]
 fn remote_compaction_v2_is_under_development() {
     assert_eq!(Feature::RemoteCompactionV2.stage(), Stage::UnderDevelopment);
     assert_eq!(Feature::RemoteCompactionV2.default_enabled(), false);

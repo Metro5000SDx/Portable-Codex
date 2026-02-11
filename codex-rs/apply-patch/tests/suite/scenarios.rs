@@ -38,14 +38,18 @@ fn run_apply_patch_scenario(dir: &Path) -> anyhow::Result<()> {
 
     // Read the patch.txt file
     let patch = fs::read_to_string(dir.join("patch.txt"))?;
+    let cli_flags = dir.join("cli_flags.txt");
 
     // Run apply_patch in the temporary directory. We intentionally do not assert
     // on the exit status here; the scenarios are specified purely in terms of
     // final filesystem state, which we compare below.
-    Command::new(codex_utils_cargo_bin::cargo_bin("apply_patch")?)
-        .arg(patch)
-        .current_dir(tmp.path())
-        .output()?;
+    let mut command = Command::new(codex_utils_cargo_bin::cargo_bin("apply_patch")?);
+    if cli_flags.is_file() {
+        for flag in fs::read_to_string(cli_flags)?.lines() {
+            command.arg(flag);
+        }
+    }
+    command.arg(patch).current_dir(tmp.path()).output()?;
 
     // Assert that the final state matches the expected state exactly
     let expected_dir = dir.join("expected");

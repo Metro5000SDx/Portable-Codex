@@ -58,6 +58,7 @@ async fn guardian_review_request_includes_patch_context() {
     let request = ApplyPatchRequest {
         turn_environment: test_turn_environment(codex_exec_server::LOCAL_ENVIRONMENT_ID),
         action,
+        options: ApplyPatchOptions::default(),
         file_paths: vec![path.clone()],
         changes: HashMap::from([(
             path.to_path_buf(),
@@ -97,6 +98,7 @@ async fn permission_request_payload_uses_apply_patch_hook_name_and_aliases() {
     let req = ApplyPatchRequest {
         turn_environment: test_turn_environment(codex_exec_server::LOCAL_ENVIRONMENT_ID),
         action,
+        options: ApplyPatchOptions::default(),
         file_paths: vec![path],
         changes: HashMap::new(),
         exec_approval_requirement: ExecApprovalRequirement::NeedsApproval {
@@ -131,6 +133,7 @@ async fn approval_keys_include_environment_id() {
     let req = ApplyPatchRequest {
         turn_environment: test_turn_environment("remote"),
         action: ApplyPatchAction::new_add_for_test(&path, "hello".to_string()),
+        options: ApplyPatchOptions::default(),
         file_paths: vec![path.clone()],
         changes: HashMap::new(),
         exec_approval_requirement: ExecApprovalRequirement::Skip {
@@ -163,6 +166,7 @@ async fn sandbox_cwd_uses_patch_action_cwd() {
     let req = ApplyPatchRequest {
         turn_environment: test_turn_environment(codex_exec_server::LOCAL_ENVIRONMENT_ID),
         action: ApplyPatchAction::new_add_for_test(&path, "hello".to_string()),
+        options: ApplyPatchOptions::default(),
         file_paths: vec![path.clone()],
         changes: HashMap::new(),
         exec_approval_requirement: ExecApprovalRequirement::Skip {
@@ -191,6 +195,7 @@ async fn file_system_sandbox_context_uses_active_attempt() {
     let req = ApplyPatchRequest {
         turn_environment: test_turn_environment(codex_exec_server::LOCAL_ENVIRONMENT_ID),
         action: ApplyPatchAction::new_add_for_test(&path, "hello".to_string()),
+        options: ApplyPatchOptions::default(),
         file_paths: vec![path.clone()],
         changes: HashMap::new(),
         exec_approval_requirement: ExecApprovalRequirement::Skip {
@@ -249,6 +254,7 @@ async fn no_sandbox_attempt_has_no_file_system_context() {
     let req = ApplyPatchRequest {
         turn_environment: test_turn_environment(codex_exec_server::LOCAL_ENVIRONMENT_ID),
         action: ApplyPatchAction::new_add_for_test(&path, "hello".to_string()),
+        options: ApplyPatchOptions::default(),
         file_paths: vec![path.clone()],
         changes: HashMap::new(),
         exec_approval_requirement: ExecApprovalRequirement::Skip {
