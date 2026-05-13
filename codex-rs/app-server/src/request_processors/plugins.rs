@@ -1350,6 +1350,7 @@ impl PluginRequestProcessor {
                     oauth_config.env_http_headers.clone(),
                     &resolved_scopes.scopes,
                     server.oauth_resource.as_deref(),
+                    /*client_metadata_url_base*/ None,
                     callback_port,
                     callback_url.as_deref(),
                 )
@@ -1365,6 +1366,7 @@ impl PluginRequestProcessor {
                             oauth_config.env_http_headers,
                             &[],
                             server.oauth_resource.as_deref(),
+                            /*client_metadata_url_base*/ None,
                             callback_port,
                             callback_url.as_deref(),
                         )
