@@ -629,6 +629,7 @@ impl Session {
             let auth_statuses = compute_auth_statuses(
                 mcp_servers.iter(),
                 config_for_mcp.mcp_oauth_credentials_store_mode,
+                config_for_mcp.auth_keyring_backend_kind(),
                 auth.as_ref(),
             )
             .await;
@@ -1153,6 +1154,7 @@ impl Session {
             let (mcp_connection_manager, cancel_token) = McpConnectionManager::new(
                 &mcp_servers,
                 config.mcp_oauth_credentials_store_mode,
+                config.auth_keyring_backend_kind(),
                 auth_statuses.clone(),
                 &session_configuration.approval_policy,
                 INITIAL_SUBMIT_ID.to_owned(),
