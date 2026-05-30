@@ -1011,7 +1011,7 @@ impl UnifiedExecProcessManager {
         };
         let mut orchestrator = ToolOrchestrator::new();
         let mut runtime = UnifiedExecRuntime::new(self, request.shell_mode.clone());
-        let file_system_sandbox_policy = context.turn.file_system_sandbox_policy();
+        let file_system_sandbox_policy = request.permission_profile.file_system_sandbox_policy();
         let exec_approval_requirement = context
             .session
             .services
@@ -1019,7 +1019,7 @@ impl UnifiedExecProcessManager {
             .create_exec_approval_requirement_for_command(ExecApprovalRequest {
                 command: &request.command,
                 approval_policy: context.turn.approval_policy.value(),
-                permission_profile: context.turn.permission_profile(),
+                permission_profile: request.permission_profile.clone(),
                 file_system_sandbox_policy: &file_system_sandbox_policy,
                 // The process cwd may be model-controlled. Policy resolution
                 // stays anchored to the selected turn environment cwd instead.
