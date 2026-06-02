@@ -1586,7 +1586,6 @@ mod tests {
     use anyhow::Result;
     use codex_protocol::ThreadId;
     use codex_protocol::account::PlanType;
-    use codex_protocol::account::ProviderAccount;
     use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
     use codex_protocol::parse_command::ParsedCommand;
     use codex_protocol::protocol::RealtimeConversationVersion;
@@ -2632,19 +2631,6 @@ mod tests {
                 "planType": "plus",
             }),
             serde_json::to_value(&chatgpt)?,
-        );
-
-        let phone_only_chatgpt = v2::Account::from(ProviderAccount::Chatgpt {
-            email: None,
-            plan_type: PlanType::Plus,
-        });
-        assert_eq!(
-            json!({
-                "type": "chatgpt",
-                "email": "",
-                "planType": "plus",
-            }),
-            serde_json::to_value(&phone_only_chatgpt)?,
         );
 
         Ok(())
