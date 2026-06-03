@@ -318,6 +318,7 @@ pub(crate) fn summary_to_thread(
         thread_source: None,
         git_info,
         name: None,
+        protected_data_mode: Default::default(),
         turns: Vec::new(),
     }
 }
