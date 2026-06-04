@@ -171,6 +171,7 @@ async fn run_exec_like(args: RunExecLikeArgs) -> Result<FunctionToolOutput, Func
             file_system_sandbox_policy: &file_system_sandbox_policy,
             #[allow(deprecated)]
             sandbox_cwd: turn.cwd.as_path(),
+            windows_sandbox_level: turn.windows_sandbox_level,
             sandbox_permissions: if effective_additional_permissions.permissions_preapproved {
                 codex_protocol::models::SandboxPermissions::UseDefault
             } else {

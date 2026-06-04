@@ -10720,6 +10720,7 @@ async fn rejects_escalated_permissions_when_policy_not_on_request() {
             file_system_sandbox_policy: &file_system_sandbox_policy,
             #[allow(deprecated)]
             sandbox_cwd: turn_context.cwd.as_path(),
+            windows_sandbox_level: turn_context.windows_sandbox_level,
             sandbox_permissions: SandboxPermissions::UseDefault,
             prefix_rule: None,
         })
