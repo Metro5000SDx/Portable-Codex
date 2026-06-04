@@ -708,7 +708,6 @@ fn evaluate_intercepted_exec_policy(
                 approval_policy,
                 permission_profile: &permission_profile,
                 file_system_sandbox_policy,
-                sandbox_cwd,
                 windows_sandbox_level,
                 sandbox_permissions,
                 used_complex_parsing,

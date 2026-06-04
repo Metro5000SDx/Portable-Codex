@@ -123,7 +123,6 @@ pub(crate) struct UnmatchedCommandContext<'a> {
     pub(crate) approval_policy: AskForApproval,
     pub(crate) permission_profile: &'a PermissionProfile,
     pub(crate) file_system_sandbox_policy: &'a FileSystemSandboxPolicy,
-    pub(crate) sandbox_cwd: &'a Path,
     pub(crate) windows_sandbox_level: WindowsSandboxLevel,
     pub(crate) sandbox_permissions: SandboxPermissions,
     pub(crate) used_complex_parsing: bool,
@@ -245,7 +244,6 @@ pub(crate) struct ExecApprovalRequest<'a> {
     pub(crate) approval_policy: AskForApproval,
     pub(crate) permission_profile: PermissionProfile,
     pub(crate) file_system_sandbox_policy: &'a FileSystemSandboxPolicy,
-    pub(crate) sandbox_cwd: &'a Path,
     pub(crate) windows_sandbox_level: WindowsSandboxLevel,
     pub(crate) sandbox_permissions: SandboxPermissions,
     pub(crate) prefix_rule: Option<Vec<String>>,
@@ -281,7 +279,6 @@ impl ExecPolicyManager {
             approval_policy,
             permission_profile,
             file_system_sandbox_policy,
-            sandbox_cwd,
             windows_sandbox_level,
             sandbox_permissions,
             prefix_rule,
@@ -303,7 +300,6 @@ impl ExecPolicyManager {
                     approval_policy,
                     permission_profile: &permission_profile,
                     file_system_sandbox_policy,
-                    sandbox_cwd,
                     windows_sandbox_level,
                     sandbox_permissions,
                     used_complex_parsing,
@@ -642,7 +638,6 @@ pub(crate) fn render_decision_for_unmatched_command(
         approval_policy,
         permission_profile,
         file_system_sandbox_policy,
-        sandbox_cwd,
         windows_sandbox_level,
         sandbox_permissions,
         used_complex_parsing,
@@ -656,22 +651,21 @@ pub(crate) fn render_decision_for_unmatched_command(
         }
     };
 
-    // When the Windows sandbox backend is disabled, a managed read-only
-    // profile is only a policy shape; there is no platform sandbox to enforce
-    // the read-only boundary. Keep that legacy case conservative while still
+    // When the Windows sandbox backend is disabled, managed filesystem
+    // restrictions are only a policy shape; there is no platform sandbox to
+    // enforce the boundary. Keep that legacy case conservative while still
     // relying on the real Windows sandbox when it is enabled.
-    let windows_read_only_without_sandbox_backend = cfg!(windows)
+    let windows_managed_fs_restrictions_without_sandbox_backend = cfg!(windows)
         && windows_sandbox_level == WindowsSandboxLevel::Disabled
-        && profile_is_managed_read_only(
+        && profile_has_managed_filesystem_restrictions(
             permission_profile,
             file_system_sandbox_policy,
-            sandbox_cwd,
         );
 
     if is_known_safe
         && !used_complex_parsing
         && (approval_policy == AskForApproval::UnlessTrusted
-            || windows_read_only_without_sandbox_backend)
+            || windows_managed_fs_restrictions_without_sandbox_backend)
     {
         return Decision::Allow;
     }
@@ -689,7 +683,7 @@ pub(crate) fn render_decision_for_unmatched_command(
             codex_shell_command::is_dangerous_command::is_dangerous_powershell_words(command)
         }
     };
-    if command_is_dangerous || windows_read_only_without_sandbox_backend {
+    if command_is_dangerous || windows_managed_fs_restrictions_without_sandbox_backend {
         return match approval_policy {
             AskForApproval::Never => {
                 let sandbox_is_explicitly_disabled = matches!(
@@ -758,10 +752,9 @@ pub(crate) fn render_decision_for_unmatched_command(
     }
 }
 
-fn profile_is_managed_read_only(
+fn profile_has_managed_filesystem_restrictions(
     permission_profile: &PermissionProfile,
     file_system_sandbox_policy: &FileSystemSandboxPolicy,
-    sandbox_cwd: &Path,
 ) -> bool {
     matches!(permission_profile, PermissionProfile::Managed { .. })
         && matches!(
@@ -769,9 +762,6 @@ fn profile_is_managed_read_only(
             FileSystemSandboxKind::Restricted
         )
         && !file_system_sandbox_policy.has_full_disk_write_access()
-        && file_system_sandbox_policy
-            .get_writable_roots_with_cwd(sandbox_cwd)
-            .is_empty()
 }
 
 fn default_policy_path(codex_home: &Path) -> PathBuf {
