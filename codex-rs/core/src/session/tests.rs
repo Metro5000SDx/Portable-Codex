@@ -346,7 +346,7 @@ async fn regular_turn_emits_turn_started_with_trace_id_without_waiting_for_start
     assert_eq!(turn_started.turn_id, tc.sub_id);
     assert_eq!(turn_started.trace_id, tc.trace_id);
 
-    sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+    sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
 }
 
 #[tokio::test]
@@ -426,7 +426,7 @@ async fn interrupting_regular_turn_waiting_on_startup_prewarm_emits_turn_aborted
         EventMsg::TurnStarted(TurnStartedEvent { turn_id, .. }) if turn_id == tc.sub_id
     ));
 
-    sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+    sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
 
     let marker_evt = tokio::time::timeout(std::time::Duration::from_secs(2), rx.recv())
         .await
@@ -2144,7 +2144,7 @@ async fn turn_start_lifecycle_exposes_turn_metadata_and_token_baseline() {
         },
     )
     .await;
-    sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+    sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
 
     let actual = records
         .lock()
@@ -7151,7 +7151,7 @@ async fn spawn_task_does_not_update_previous_turn_settings_for_non_run_turn_task
     )
     .await;
 
-    sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+    sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
     assert_eq!(sess.previous_turn_settings().await, None);
 }
 
@@ -8571,7 +8571,7 @@ async fn abort_regular_task_emits_marker_before_turn_aborted() {
     )
     .await;
 
-    sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+    sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
 
     // Interrupts surface the model-visible `<turn_aborted>` marker before the abort event.
     let marker_evt = tokio::time::timeout(std::time::Duration::from_secs(2), rx.recv())
@@ -8612,7 +8612,7 @@ async fn abort_gracefully_emits_marker_before_turn_aborted() {
     )
     .await;
 
-    sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+    sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
 
     // Gracefully cancelled tasks surface the model-visible marker before the abort event too.
     let marker_evt = tokio::time::timeout(std::time::Duration::from_secs(2), rx.recv())
@@ -8859,7 +8859,7 @@ async fn try_start_turn_if_idle_rejects_active_turn_without_injecting() {
         sess.input_queue.get_pending_input(&sess.active_turn).await
     );
 
-    sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+    sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
 }
 
 #[tokio::test]
@@ -8972,7 +8972,7 @@ async fn steer_input_rejects_non_regular_turns() {
 
         assert_eq!(err, SteerInputError::ActiveTurnNotSteerable { turn_kind });
 
-        sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+        sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
     }
 }
 
@@ -9038,7 +9038,7 @@ async fn abort_empty_active_turn_preserves_pending_input() {
         )
         .await;
 
-    sess.abort_active_turn(TurnAbortReason::Replaced).await;
+    sess.abort_all_tasks(TurnAbortReason::Replaced).await;
 
     assert!(sess.active_turn.lock().await.is_none());
     assert_eq!(
@@ -9073,7 +9073,7 @@ async fn interrupt_accounts_active_goal_without_pausing() -> anyhow::Result<()> 
     .await;
     set_total_token_usage(&sess, post_goal_token_usage()).await;
 
-    sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+    sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
 
     let goal = sess
         .get_thread_goal()
@@ -9514,7 +9514,7 @@ async fn budget_limited_accounting_steers_active_turn_without_aborting() -> anyh
     assert_eq!(codex_state::ThreadGoalStatus::BudgetLimited, goal.status);
     assert_eq!(40, goal.tokens_used);
 
-    sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+    sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
 
     Ok(())
 }
@@ -9562,7 +9562,7 @@ async fn usage_limit_runtime_stops_active_goal_and_prevents_idle_continuation() 
     assert_eq!(codex_state::ThreadGoalStatus::UsageLimited, goal.status);
     assert_eq!(70, goal.tokens_used);
 
-    sess.abort_active_turn(TurnAbortReason::Replaced).await;
+    sess.abort_all_tasks(TurnAbortReason::Replaced).await;
     sess.goal_runtime_apply(GoalRuntimeEvent::MaybeContinueIfIdle)
         .await?;
     assert!(sess.active_turn.lock().await.is_none());
@@ -9636,7 +9636,7 @@ async fn external_goal_mutation_accounts_active_turn_before_status_change() -> a
     assert_eq!(codex_state::ThreadGoalStatus::Complete, goal.status);
     assert_eq!(70, goal.tokens_used);
 
-    sess.abort_active_turn(TurnAbortReason::Replaced).await;
+    sess.abort_all_tasks(TurnAbortReason::Replaced).await;
 
     Ok(())
 }
@@ -9702,7 +9702,7 @@ async fn external_objective_change_steers_active_turn() -> anyhow::Result<()> {
         "expected objective-updated steering prompt in pending input: {pending_input:?}"
     );
 
-    sess.abort_active_turn(TurnAbortReason::Replaced).await;
+    sess.abort_all_tasks(TurnAbortReason::Replaced).await;
 
     Ok(())
 }
@@ -9764,7 +9764,7 @@ async fn external_active_goal_set_marks_current_turn_for_accounting() -> anyhow:
     assert_eq!(codex_state::ThreadGoalStatus::Active, goal.status);
     assert_eq!(25, goal.tokens_used);
 
-    sess.abort_active_turn(TurnAbortReason::Replaced).await;
+    sess.abort_all_tasks(TurnAbortReason::Replaced).await;
 
     Ok(())
 }
@@ -9907,7 +9907,7 @@ async fn queue_only_mailbox_mail_waits_for_next_turn_after_answer_boundary() {
         Vec::new()
     );
 
-    sess.abort_active_turn(TurnAbortReason::Replaced).await;
+    sess.abort_all_tasks(TurnAbortReason::Replaced).await;
 
     assert_eq!(
         sess.input_queue.get_pending_input(&sess.active_turn).await,
@@ -9948,7 +9948,7 @@ async fn trigger_turn_mailbox_mail_waits_for_next_turn_after_answer_boundary() {
         "trigger-turn mailbox mail should not extend the current turn after its answer boundary"
     );
 
-    sess.abort_active_turn(TurnAbortReason::Replaced).await;
+    sess.abort_all_tasks(TurnAbortReason::Replaced).await;
 
     assert!(sess.input_queue.has_trigger_turn_mailbox_items().await);
 }
@@ -10134,7 +10134,7 @@ async fn abort_review_task_emits_exited_then_aborted_and_records_history() {
     sess.spawn_task(Arc::clone(&tc), input, ReviewTask::new())
         .await;
 
-    sess.abort_active_turn(TurnAbortReason::Interrupted).await;
+    sess.abort_all_tasks(TurnAbortReason::Interrupted).await;
 
     // Aborting a review task should exit review mode before surfacing the abort to the client.
     // We scan for these events (rather than relying on fixed ordering) since unrelated events
