@@ -1233,6 +1233,7 @@ impl ThreadRequestProcessor {
             active_permission_profile,
             reasoning_effort: config_snapshot.reasoning_effort,
         };
+        let catalog_summary = thread_summary_from_thread(thread.clone(), /*archived_at*/ None);
         let notif = thread_started_notification(thread);
         listener_task_context
             .outgoing
@@ -1241,6 +1242,11 @@ impl ThreadRequestProcessor {
                 "app_server.thread_start.send_response",
                 otel.name = "app_server.thread_start.send_response",
             ))
+            .await;
+
+        listener_task_context
+            .thread_catalog_subscriptions
+            .publish_thread_summary(catalog_summary)
             .await;
 
         listener_task_context
