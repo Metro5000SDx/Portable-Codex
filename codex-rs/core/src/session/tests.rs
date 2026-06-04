@@ -266,19 +266,18 @@ fn histogram_sum(resource_metrics: &ResourceMetrics, name: &str) -> u64 {
 fn histogram_attributes(
     resource_metrics: &ResourceMetrics,
     name: &str,
-) -> Vec<BTreeMap<String, String>> {
+) -> BTreeMap<String, String> {
     let metric = find_metric(resource_metrics, name);
     match metric.data() {
         AggregatedMetrics::F64(data) => match data {
-            MetricData::Histogram(histogram) => histogram
-                .data_points()
-                .map(|point| {
-                    point
-                        .attributes()
-                        .map(|kv| (kv.key.as_str().to_string(), kv.value.as_str().to_string()))
-                        .collect()
-                })
-                .collect(),
+            MetricData::Histogram(histogram) => {
+                let points: Vec<_> = histogram.data_points().collect();
+                assert_eq!(points.len(), 1);
+                points[0]
+                    .attributes()
+                    .map(|kv| (kv.key.as_str().to_string(), kv.value.as_str().to_string()))
+                    .collect()
+            }
             _ => panic!("unexpected histogram aggregation"),
         },
         _ => panic!("unexpected metric data type"),
@@ -6388,17 +6387,14 @@ async fn shutdown_cancels_startup_prewarm() {
         .expect("runtime metrics snapshot");
     assert_eq!(
         histogram_attributes(&snapshot, STARTUP_PHASE_DURATION_METRIC),
-        vec![BTreeMap::from([
+        BTreeMap::from([
             ("phase".to_string(), "startup_prewarm_total".to_string()),
             ("status".to_string(), "cancelled".to_string()),
-        ])]
+        ])
     );
     assert_eq!(
         histogram_attributes(&snapshot, STARTUP_PREWARM_DURATION_METRIC),
-        vec![BTreeMap::from([(
-            "status".to_string(),
-            "cancelled".to_string(),
-        )])]
+        BTreeMap::from([("status".to_string(), "cancelled".to_string(),)])
     );
 }
 
