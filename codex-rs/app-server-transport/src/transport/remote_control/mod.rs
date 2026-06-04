@@ -15,6 +15,7 @@ use crate::transport::remote_control::websocket::RemoteControlStatusPublisher;
 use crate::transport::remote_control::websocket::RemoteControlWebsocket;
 
 pub use self::protocol::ClientId;
+use self::protocol::RemoteControlPairingStatusCode;
 use self::protocol::ServerEvent;
 use self::protocol::StreamId;
 use self::protocol::normalize_remote_control_url;
@@ -28,6 +29,8 @@ use codex_app_server_protocol::RemoteControlClientsRevokeResponse;
 use codex_app_server_protocol::RemoteControlConnectionStatus;
 use codex_app_server_protocol::RemoteControlPairingStartParams;
 use codex_app_server_protocol::RemoteControlPairingStartResponse;
+use codex_app_server_protocol::RemoteControlPairingStatusParams;
+use codex_app_server_protocol::RemoteControlPairingStatusResponse;
 use codex_app_server_protocol::RemoteControlStatusChangedNotification;
 use codex_login::AuthManager;
 use codex_state::StateRuntime;
@@ -223,6 +226,82 @@ impl RemoteControlHandle {
         pairing_response
     }
 
+    pub async fn pairing_status(
+        &self,
+        params: RemoteControlPairingStatusParams,
+    ) -> io::Result<RemoteControlPairingStatusResponse> {
+        if !*self.enabled_tx.borrow() {
+            return Err(Self::pairing_disabled_error());
+        }
+        let mut auth = load_remote_control_auth(&self.auth_manager)
+            .await
+            .map_err(|_| pairing_unavailable_error())?;
+        let mut enrollment = {
+            let current_enrollment = self
+                .current_enrollment
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            current_enrollment
+                .as_ref()
+                .filter(|enrollment| enrollment.account_id == auth.account_id)
+                .cloned()
+        }
+        .ok_or_else(pairing_unavailable_error)?;
+        let installation_id = self.status().installation_id;
+        if enrollment.should_refresh_server_token() {
+            refresh_pairing_enrollment(
+                &self.current_enrollment,
+                &self.auth_manager,
+                &mut auth,
+                &installation_id,
+                &mut enrollment,
+            )
+            .await?;
+        }
+        let status_code = remote_control_pairing_status_code(&params)?;
+        let pairing_status_request =
+            || protocol::RemoteControlPairingStatusRequest::from(status_code.clone());
+        let pairing_status_response =
+            match enrollment.pairing_status(pairing_status_request()).await {
+                Err(err) if err.kind() == io::ErrorKind::PermissionDenied => {
+                    clear_pairing_server_token(&self.current_enrollment, &mut enrollment)?;
+                    refresh_pairing_enrollment(
+                        &self.current_enrollment,
+                        &self.auth_manager,
+                        &mut auth,
+                        &installation_id,
+                        &mut enrollment,
+                    )
+                    .await?;
+                    enrollment.pairing_status(pairing_status_request()).await
+                }
+                pairing_status_response => pairing_status_response,
+            };
+        if let Err(err) = &pairing_status_response {
+            match err.kind() {
+                io::ErrorKind::NotFound => {
+                    clear_current_enrollment_if_matches(&self.current_enrollment, &enrollment);
+                    return Err(pairing_unavailable_error());
+                }
+                io::ErrorKind::PermissionDenied => {
+                    clear_pairing_server_token(&self.current_enrollment, &mut enrollment)?;
+                    return Err(pairing_unavailable_error());
+                }
+                _ => {}
+            }
+        }
+        if !*self.enabled_tx.borrow() {
+            return Err(Self::pairing_disabled_error());
+        }
+        let current_auth = load_remote_control_auth(&self.auth_manager)
+            .await
+            .map_err(|_| pairing_unavailable_error())?;
+        if current_auth.account_id != auth.account_id {
+            return Err(pairing_unavailable_error());
+        }
+        pairing_status_response
+    }
+
     pub async fn list_clients(
         &self,
         params: RemoteControlClientsListParams,
@@ -274,6 +353,27 @@ impl RemoteControlHandle {
             );
         }
         self.status()
+    }
+}
+
+fn remote_control_pairing_status_code(
+    params: &RemoteControlPairingStatusParams,
+) -> io::Result<RemoteControlPairingStatusCode> {
+    match (&params.pairing_code, &params.manual_pairing_code) {
+        (Some(pairing_code), None) => Ok(RemoteControlPairingStatusCode::PairingCode(
+            pairing_code.clone(),
+        )),
+        (None, Some(manual_pairing_code)) => Ok(RemoteControlPairingStatusCode::ManualPairingCode(
+            manual_pairing_code.clone(),
+        )),
+        (Some(_), Some(_)) => Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "remote control pairing status accepts either pairingCode or manualPairingCode, not both",
+        )),
+        (None, None) => Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "remote control pairing status requires pairingCode or manualPairingCode",
+        )),
     }
 }
 
