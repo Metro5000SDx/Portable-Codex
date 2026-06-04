@@ -11,5 +11,6 @@ pub use types::DeliveredConfigToml;
 pub use types::DeliveredRequirementsToml;
 pub use types::DeliveredTomlFragment;
 pub use types::PaginatedListTaskListItem;
+pub use types::ProtectedDataModePolicyResponse;
 pub use types::TaskListItem;
 pub use types::TurnAttemptsSiblingTurnsResponse;

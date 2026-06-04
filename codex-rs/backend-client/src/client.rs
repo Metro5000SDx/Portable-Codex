@@ -1,6 +1,7 @@
 use crate::types::CodeTaskDetailsResponse;
 use crate::types::ConfigBundleResponse;
 use crate::types::PaginatedListTaskListItem;
+use crate::types::ProtectedDataModePolicyResponse;
 use crate::types::RateLimitReachedKind as BackendRateLimitReachedKind;
 use crate::types::RateLimitStatusPayload;
 use crate::types::TurnAttemptsSiblingTurnsResponse;
@@ -302,6 +303,13 @@ impl Client {
         Ok(Self::rate_limit_snapshots_from_payload(payload))
     }
 
+    pub async fn get_protected_data_mode_policy(&self) -> Result<ProtectedDataModePolicyResponse> {
+        let url = self.protected_data_mode_policy_url();
+        let req = self.http.get(&url).headers(self.headers());
+        let (body, ct) = self.exec_request(req, "GET", &url).await?;
+        self.decode_json(&url, &ct, &body)
+    }
+
     pub async fn send_add_credits_nudge_email(
         &self,
         credit_type: AddCreditsNudgeCreditType,
@@ -547,6 +555,16 @@ impl Client {
                 )
             }
         }
+    }
+
+    fn protected_data_mode_policy_url(&self) -> String {
+        if let Some(prefix) = self.base_url.strip_suffix("/api/codex") {
+            return format!("{prefix}/api/settings/protected_data_mode");
+        }
+        if self.base_url.ends_with("/backend-api") || self.base_url.ends_with("/api") {
+            return format!("{}/settings/protected_data_mode", self.base_url);
+        }
+        format!("{}/api/settings/protected_data_mode", self.base_url)
     }
 
     fn map_rate_limit_window(
@@ -913,6 +931,27 @@ mod tests {
             })
             .unwrap(),
             serde_json::json!({ "credit_type": "usage_limit" })
+        );
+    }
+
+    #[test]
+    fn protected_data_mode_policy_uses_expected_paths() {
+        let codex_client = Client::new("https://example.test").unwrap();
+        assert_eq!(
+            codex_client.protected_data_mode_policy_url(),
+            "https://example.test/api/settings/protected_data_mode"
+        );
+
+        let chatgpt_client = Client::new("https://chatgpt.com").unwrap();
+        assert_eq!(
+            chatgpt_client.protected_data_mode_policy_url(),
+            "https://chatgpt.com/backend-api/settings/protected_data_mode"
+        );
+
+        let hosted_client = Client::new("https://example.test/api/codex").unwrap();
+        assert_eq!(
+            hosted_client.protected_data_mode_policy_url(),
+            "https://example.test/api/settings/protected_data_mode"
         );
     }
 }

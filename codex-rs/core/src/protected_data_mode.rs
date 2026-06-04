@@ -22,5 +22,11 @@ impl ProtectedDataModeExitPolicy for DenyProtectedDataModeExitPolicy {
 }
 
 pub(crate) fn default_exit_policy() -> Arc<RwLock<Arc<dyn ProtectedDataModeExitPolicy>>> {
-    Arc::new(RwLock::new(Arc::new(DenyProtectedDataModeExitPolicy)))
+    exit_policy(Arc::new(DenyProtectedDataModeExitPolicy))
+}
+
+pub(crate) fn exit_policy(
+    policy: Arc<dyn ProtectedDataModeExitPolicy>,
+) -> Arc<RwLock<Arc<dyn ProtectedDataModeExitPolicy>>> {
+    Arc::new(RwLock::new(policy))
 }

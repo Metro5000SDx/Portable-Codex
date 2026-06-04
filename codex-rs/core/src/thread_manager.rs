@@ -9,6 +9,7 @@ use crate::environment_selection::default_thread_environment_selections;
 use crate::environment_selection::resolve_environment_selections;
 use crate::mcp::McpManager;
 use crate::protected_data_mode::default_exit_policy;
+use crate::protected_data_mode::exit_policy;
 use crate::rollout::truncation;
 use crate::session::Codex;
 use crate::session::CodexSpawnArgs;
@@ -266,6 +267,35 @@ impl ThreadManager {
         installation_id: String,
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
     ) -> Self {
+        Self::new_with_protected_data_mode_exit_policy(
+            config,
+            auth_manager,
+            session_source,
+            environment_manager,
+            extensions,
+            analytics_events_client,
+            thread_store,
+            state_db,
+            installation_id,
+            attestation_provider,
+            Arc::new(crate::protected_data_mode::DenyProtectedDataModeExitPolicy),
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_with_protected_data_mode_exit_policy(
+        config: &Config,
+        auth_manager: Arc<AuthManager>,
+        session_source: SessionSource,
+        environment_manager: Arc<EnvironmentManager>,
+        extensions: Arc<ExtensionRegistry<Config>>,
+        analytics_events_client: Option<AnalyticsEventsClient>,
+        thread_store: Arc<dyn ThreadStore>,
+        state_db: Option<StateDbHandle>,
+        installation_id: String,
+        attestation_provider: Option<Arc<dyn AttestationProvider>>,
+        protected_data_mode_exit_policy: Arc<dyn ProtectedDataModeExitPolicy>,
+    ) -> Self {
         let codex_home = config.codex_home.clone();
         let restriction_product = session_source.restriction_product();
         let (thread_created_tx, _) = broadcast::channel(THREAD_CREATED_CHANNEL_CAPACITY);
@@ -291,7 +321,7 @@ impl ThreadManager {
                 extensions,
                 thread_store,
                 attestation_provider,
-                protected_data_mode_exit_policy: default_exit_policy(),
+                protected_data_mode_exit_policy: exit_policy(protected_data_mode_exit_policy),
                 auth_manager,
                 session_source,
                 installation_id,

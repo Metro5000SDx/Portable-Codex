@@ -17,6 +17,14 @@ use serde::de::Deserializer;
 use serde_json::Value;
 use std::collections::HashMap;
 
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct ProtectedDataModePolicyResponse {
+    pub available: bool,
+    pub exit_enabled: bool,
+    pub exit_allowed_by_workspace: bool,
+    pub can_exit: bool,
+}
+
 /// Hand-rolled models for the Cloud Tasks task-details response.
 /// The generated OpenAPI models are pretty bad. This is a half-step
 /// towards hand-rolling them.

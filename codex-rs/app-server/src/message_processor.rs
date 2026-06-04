@@ -16,6 +16,7 @@ use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::ConnectionRequestId;
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::RequestContext;
+use crate::protected_data_mode::HostedProtectedDataModeExitPolicy;
 use crate::request_processors::AccountRequestProcessor;
 use crate::request_processors::AppsRequestProcessor;
 use crate::request_processors::CatalogRequestProcessor;
@@ -305,8 +306,12 @@ impl MessageProcessor {
         // resumed, or forked threads to a different persistence backend/root.
         let thread_store = codex_core::thread_store_from_config(config.as_ref(), state_db.clone());
         let environment_manager_for_requests = Arc::clone(&environment_manager);
+        let protected_data_mode_exit_policy = Arc::new(HostedProtectedDataModeExitPolicy::new(
+            config.chatgpt_base_url.clone(),
+            auth_manager.clone(),
+        ));
         let thread_manager = Arc::new_cyclic(|thread_manager| {
-            ThreadManager::new(
+            ThreadManager::new_with_protected_data_mode_exit_policy(
                 config.as_ref(),
                 auth_manager.clone(),
                 session_source,
@@ -324,6 +329,7 @@ impl MessageProcessor {
                     outgoing.clone(),
                     thread_state_manager.clone(),
                 )),
+                protected_data_mode_exit_policy.clone(),
             )
         });
         thread_manager
