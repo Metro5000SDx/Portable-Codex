@@ -23,6 +23,14 @@ config_setting(
 )
 
 config_setting(
+    name = "platform_windows_gnullvm",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@rules_rs//rs/experimental/platforms/constraints:windows_gnullvm",
+    ],
+)
+
+config_setting(
     name = "use_rusty_v8_custom_libcxx",
     flag_values = {
         "@v8//:v8_use_rusty_v8_custom_libcxx": "True",

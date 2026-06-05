@@ -307,7 +307,7 @@ index b432f86..28c567b 100644
      ],
  )
  
-@@ -4791,9 +4823,15 @@ v8_binary(
+@@ -4791,9 +4823,16 @@ v8_binary(
          ":icu/generated_torque_initializers",
          ":icu/v8_initializers_files",
      ],
@@ -319,6 +319,7 @@ index b432f86..28c567b 100644
          "@v8//bazel/config:is_android": ["-llog"],
 -        "//conditions:default": [],
 +        "@v8//bazel/config:is_macos": ["-Wl,-no_deduplicate"],
++        "@@//third_party/v8:platform_windows_gnullvm": ["-Wl,--icf=none"],
 +        "@v8//bazel/config:is_windows": ["/OPT:NOICF"],
 +        "//conditions:default": ["-Wl,--icf=none"],
      }),
