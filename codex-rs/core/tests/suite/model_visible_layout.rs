@@ -122,7 +122,6 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
                 text: "first turn".into(),
                 text_elements: Vec::new(),
             }],
-            environments: None,
             final_output_json_schema: None,
             responsesapi_client_metadata: None,
             additional_context: Default::default(),
@@ -158,7 +157,6 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
                 text: "second turn with context updates".into(),
                 text_elements: Vec::new(),
             }],
-            environments: None,
             final_output_json_schema: None,
             responsesapi_client_metadata: None,
             additional_context: Default::default(),
@@ -248,7 +246,6 @@ async fn snapshot_model_visible_layout_cwd_change_does_not_refresh_agents() -> R
                 text: "first turn in agents_one".into(),
                 text_elements: Vec::new(),
             }],
-            environments: None,
             final_output_json_schema: None,
             responsesapi_client_metadata: None,
             additional_context: Default::default(),
@@ -282,7 +279,6 @@ async fn snapshot_model_visible_layout_cwd_change_does_not_refresh_agents() -> R
                 text: "second turn in agents_two".into(),
                 text_elements: Vec::new(),
             }],
-            environments: None,
             final_output_json_schema: None,
             responsesapi_client_metadata: None,
             additional_context: Default::default(),
@@ -362,7 +358,6 @@ async fn snapshot_model_visible_layout_resume_with_personality_change() -> Resul
     .await;
     codex
         .submit(Op::UserInput {
-            environments: None,
             items: vec![UserInput::Text {
                 text: "seed resume history".into(),
                 text_elements: Vec::new(),
@@ -408,7 +403,6 @@ async fn snapshot_model_visible_layout_resume_with_personality_change() -> Resul
                 text: "resume and change personality".into(),
                 text_elements: Vec::new(),
             }],
-            environments: None,
             final_output_json_schema: None,
             responsesapi_client_metadata: None,
             additional_context: Default::default(),
@@ -478,7 +472,6 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
     .await;
     codex
         .submit(Op::UserInput {
-            environments: None,
             items: vec![UserInput::Text {
                 text: "seed resume history".into(),
                 text_elements: Vec::new(),
@@ -520,7 +513,6 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
     resumed
         .codex
         .submit(Op::UserInput {
-            environments: None,
             items: vec![UserInput::Text {
                 text: "first resumed turn after model override".into(),
                 text_elements: Vec::new(),
