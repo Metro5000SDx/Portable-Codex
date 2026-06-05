@@ -21,6 +21,21 @@ foreach ($cmd in @('git', 'node', 'pnpm', 'rustup', 'cargo', 'cl', 'link')) {
 }
 Write-Host ''
 
+$kitsRoot = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\Lib'
+$kernel32 = if (Test-Path $kitsRoot) {
+    Get-ChildItem -Path $kitsRoot -Recurse -Filter kernel32.lib -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -match '\\um\\x64\\kernel32\.lib$' } |
+        Select-Object -First 1
+} else {
+    $null
+}
+if ($kernel32) {
+    Write-Host "Windows SDK: $($kernel32.Directory.FullName)"
+} else {
+    Write-Host 'Windows SDK: missing kernel32.lib'
+}
+Write-Host ''
+
 if (Test-Path (Join-Path $PortableTargetDir 'debug\codex.exe')) {
     Write-Host 'Build: debug codex.exe exists'
 } else {

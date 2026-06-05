@@ -70,8 +70,9 @@ git push -u origin main
 
 The upstream install document recommends Windows builds via WSL2. Native Windows
 builds require the MSVC C++ toolchain and Windows SDK. If `portable\build.ps1`
-fails because `link.exe` or MSVC tools are missing, install Visual Studio 2022
-Build Tools with the C++ workload, then run the build again:
+fails because `link.exe` or `kernel32.lib` is missing, install or repair Visual
+Studio 2022 Build Tools with the C++ workload and Windows SDK, then run the
+build again:
 
 ```powershell
 .\portable\install-msvc-buildtools.ps1
