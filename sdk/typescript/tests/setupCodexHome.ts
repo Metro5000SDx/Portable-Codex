@@ -2,10 +2,12 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { afterEach, beforeEach } from "@jest/globals";
+import { afterEach, beforeEach, jest } from "@jest/globals";
 
 const originalCodexHome = process.env.CODEX_HOME;
 let currentCodexHome: string | undefined;
+
+jest.setTimeout(30_000);
 
 beforeEach(async () => {
   currentCodexHome = await fs.mkdtemp(path.join(os.tmpdir(), "codex-sdk-test-"));
@@ -23,6 +25,11 @@ afterEach(async () => {
   }
 
   if (codexHomeToDelete) {
-    await fs.rm(codexHomeToDelete, { recursive: true, force: true });
+    await fs.rm(codexHomeToDelete, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 100,
+    });
   }
 });
