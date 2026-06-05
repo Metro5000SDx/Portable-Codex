@@ -66,6 +66,16 @@ async fn refreshes_expired_persisted_token_before_initialize() -> anyhow::Result
         .and(path("/mcp"))
         .and(header(
             "authorization",
+            format!("Bearer {EXPIRED_ACCESS_TOKEN}"),
+        ))
+        .respond_with(ResponseTemplate::new(401))
+        .expect(0)
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/mcp"))
+        .and(header(
+            "authorization",
             format!("Bearer {REFRESHED_ACCESS_TOKEN}"),
         ))
         .respond_with(|request: &Request| {
